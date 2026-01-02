@@ -2,17 +2,20 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, ImageBackground } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { ANSWERS } from './answers';
+import InterstitialScreen from './InterstitialScreen';
 
 export default function App() {
   const [answer, setAnswer] = useState('');
   const [countdown, setCountdown] = useState(null);
   const timerRef = useRef(null);
+  const interstitialRef = useRef(null);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
   return (
     <ImageBackground
       source={require('./assets/images/book_of_answer.png')}
@@ -38,6 +41,7 @@ export default function App() {
               }
               // start countdown then pick an answer
               if (timerRef.current) return;
+              interstitialRef.current?.show();
               let n = 3;
               setCountdown(n);
               timerRef.current = setInterval(() => {
@@ -58,6 +62,7 @@ export default function App() {
           </TouchableOpacity>
         )}
       </View>
+      <InterstitialScreen ref={interstitialRef} />
       <StatusBar style="auto" />
     </ImageBackground>
   );
@@ -74,5 +79,3 @@ const styles = StyleSheet.create({
   countdown: { fontSize: 48, color: '#7CFC00', marginVertical: 12, fontWeight: '700' },
   buttonDisabled: { opacity: 0.7 },
 });
-
-

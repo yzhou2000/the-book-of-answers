@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -28,6 +28,15 @@
       "edgeToEdgeEnabled": true,
       "package": "com.yzhou2025.thebookofanswers"
     },
+    "plugins": [
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-2776707850684969~2028483605",
+          "iosAppId": "ca-app-pub-2776707850684969~3662781865"
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     },
