@@ -2,7 +2,7 @@ import React, { useEffect, useImperativeHandle, useRef, forwardRef, useState } f
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import mobileAds, { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 
-const FORCE_TEST_ADS = true;
+const FORCE_TEST_ADS = false;
 const interstitialAdUnitId = __DEV__ || FORCE_TEST_ADS
   ? Platform.select({
       android: 'ca-app-pub-3940256099942544/1033173712',

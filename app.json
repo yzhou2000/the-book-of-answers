@@ -26,7 +26,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.yzhou2025.thebookofanswers"
+      "package": "com.yzhou2026.thebookofanswers"
     },
     "plugins": [
       [
@@ -42,8 +42,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "9474d6ee-5c76-47d0-a5b9-b4a5836785e4"
+        "projectId": "8b605b52-d81d-48a1-84ff-1f6e6d49e269"
       }
-    }
+    },
+    "owner": "yzhou2026"
   }
 }
