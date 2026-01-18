@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yzhou2025.thebookofanswers",
+      "bundleIdentifier": "com.yzhou2026.thebookofanswers",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -30,7 +30,7 @@
     },
     "plugins": [
       [
-        "react-native-google-mobile-ads",
+        "react-native-google-mobile-ads/app.plugin.js",
         {
           "androidAppId": "ca-app-pub-2776707850684969~2028483605",
           "iosAppId": "ca-app-pub-2776707850684969~3662781865"

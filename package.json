@@ -9,16 +9,17 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo": "~54.0.30",
-    "expo-dev-client": "^6.0.20",
-    "expo-status-bar": "~3.0.9",
-    "react": "19.1.0",
-    "react-native": "0.81.5",
+    "expo": "~50.0.0",
+    "expo-dev-client": "~3.3.7",
+    
+    "expo-status-bar": "~1.11.1",
+    "react": "18.2.0",
+    "react-native": "0.73.6",
     "react-native-google-mobile-ads": "^16.0.1"
   },
   "private": true,
   "devDependencies": {
-    "@expo/config": "^12.0.13",
-    "@expo/config-plugins": "^54.0.4"
+    "@expo/config": "~9.0.2",
+    "@expo/config-plugins": "~7.8.4"
   }
 }
