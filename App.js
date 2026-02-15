@@ -115,7 +115,7 @@ export default function App() {
     >
       <View style={styles.topBar}>
         <Pressable onPress={() => setShowSettings(true)} style={styles.settingsButton}>
-          <Text style={styles.settingsText}>Settings</Text>
+          <Text style={styles.settingsText}>设置</Text>
         </Pressable>
       </View>
       <View style={styles.content}>
@@ -156,7 +156,7 @@ export default function App() {
         </View>
         {!answer && (
           <Text style={styles.header}>
-            Think of a question.
+            在心里默念你的问题。
           </Text>
         )}
         {countdown ? (
@@ -267,7 +267,7 @@ export default function App() {
               }, 1000);
             }}
           >
-            <Text style={styles.buttonText}>{answer ? 'Ask again' : 'Seek clarity'}</Text>
+            <Text style={styles.buttonText}>{answer ? '再问一次' : '寻找答案'}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -313,9 +313,9 @@ export default function App() {
       <Modal animationType="fade" transparent visible={showSettings} onRequestClose={() => setShowSettings(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setShowSettings(false)}>
           <Pressable style={styles.modalCard} onPress={() => {}}>
-            <Text style={styles.modalTitle}>Settings</Text>
+            <Text style={styles.modalTitle}>设置</Text>
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Category</Text>
+              <Text style={styles.settingLabel}>分类</Text>
               <Pressable
                 onPress={() => {
                   if (totalCategories <= 1) return;
@@ -326,19 +326,19 @@ export default function App() {
                   setCountdown(null);
                 }}
               >
-                <Text style={styles.settingValue}>{selectedCategory?.label || 'General Life'}</Text>
+                <Text style={styles.settingValue}>{selectedCategory?.label || '人生日常'}</Text>
               </Pressable>
             </View>
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Vibration</Text>
+              <Text style={styles.settingLabel}>震动反馈</Text>
               <Switch value={enableHaptics} onValueChange={setEnableHaptics} />
             </View>
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Animations</Text>
+              <Text style={styles.settingLabel}>动效</Text>
               <Switch value={enableAnimations} onValueChange={setEnableAnimations} />
             </View>
             <Pressable style={styles.closeButton} onPress={() => setShowSettings(false)}>
-              <Text style={styles.closeButtonText}>Done</Text>
+              <Text style={styles.closeButtonText}>完成</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -388,29 +388,31 @@ const styles = StyleSheet.create({
   },
   ribbonButtonText: { color: '#F8F4E3', fontSize: 26, fontWeight: '700', lineHeight: 28 },
   header: {
-    fontSize: 28,
-    lineHeight: 34,
-    color: '#000000',
-    marginVertical: 16,
+    fontSize: 34,
+    lineHeight: 40,
+    color: '#FFFFFF',
+    marginTop: -16,
+    marginBottom: 16,
     textAlign: 'center',
-    paddingHorizontal: 28,
+    width: 320,
+    alignSelf: 'center',
     fontWeight: '600',
-    maxWidth: 320,
     textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
-  button: { backgroundColor: '#3a86ff', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: 12 },
-  buttonText: { color: '#fff', fontSize: 18 },
+  button: { backgroundColor: '#3a86ff', width: 220, paddingVertical: 12, borderRadius: 8, marginTop: -8, alignItems: 'center' },
+  buttonText: { color: '#fff', fontSize: 18, textAlign: 'center' },
   buttonRed: { backgroundColor: '#3a86ff' },
-  answerWrap: { alignItems: 'center', justifyContent: 'center' },
-  answerTextWrap: { alignItems: 'center' },
+  answerWrap: { alignItems: 'center', justifyContent: 'center', marginTop: -48 },
+  answerTextWrap: { alignItems: 'center', width: 320, alignSelf: 'center' },
   answer: {
     fontSize: 36,
     color: '#FFFFFF',
     marginVertical: 16,
     textAlign: 'center',
-    paddingHorizontal: 20,
+    width: '100%',
+    paddingHorizontal: 0,
     fontWeight: '700',
     textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 2 },
