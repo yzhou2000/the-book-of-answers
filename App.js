@@ -156,7 +156,7 @@ export default function App() {
         </View>
         {!answer && (
           <Text style={styles.header}>
-            在心里默念你的问题。
+            请默念你的问题。
           </Text>
         )}
         {countdown ? (
@@ -330,11 +330,11 @@ export default function App() {
               </Pressable>
             </View>
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>震动反馈</Text>
+              <Text style={styles.settingLabel}>震动</Text>
               <Switch value={enableHaptics} onValueChange={setEnableHaptics} />
             </View>
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>动效</Text>
+              <Text style={styles.settingLabel}>动画</Text>
               <Switch value={enableAnimations} onValueChange={setEnableAnimations} />
             </View>
             <Pressable style={styles.closeButton} onPress={() => setShowSettings(false)}>
