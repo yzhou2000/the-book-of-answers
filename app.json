@@ -3,7 +3,7 @@
     "name": "答案之书",
     "slug": "the-book-of-answers-zh",
     "scheme": "thebookofanswerszh",
-    "version": "1.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -35,6 +35,14 @@
         {
           "androidAppId": "ca-app-pub-2776707850684969~2028483605",
           "iosAppId": "ca-app-pub-2776707850684969~3662781865"
+        }
+      ],
+      [
+       "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
       ]
     ],

@@ -109,7 +109,7 @@ export default function App() {
 
   return (
     <ImageBackground
-      source={categoryBackgrounds[selectedCategory?.key] || require('./assets/images/book_of_answer.png')}
+      source={categoryBackgrounds[selectedCategory?.key] || require('./assets/images/the-book-of-answers-zh.png')}
       style={styles.container}
       resizeMode="cover"
     >
