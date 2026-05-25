@@ -100,11 +100,16 @@ export default function App() {
   const selectedCategory = categories[categoryIndex] || categories[0];
 
   const categoryBackgrounds = {
-    general: require('./assets/images/categories/general.png'),
+    life: require('./assets/images/categories/life.png'),
     love: require('./assets/images/categories/love.png'),
-    family: require('./assets/images/categories/family.png'),
     career: require('./assets/images/categories/career.png'),
-    finance: require('./assets/images/categories/finance.png'),
+    wealth: require('./assets/images/categories/wealth.png'),
+    family: require('./assets/images/categories/family.png'),
+    study: require('./assets/images/categories/study.png'),
+    health: require('./assets/images/categories/health.png'),
+    friendship: require('./assets/images/categories/friendship.png'),
+    decision: require('./assets/images/categories/decision.png'),
+    luck: require('./assets/images/categories/luck.png'),
   };
 
   return (
@@ -117,6 +122,12 @@ export default function App() {
         <Pressable onPress={() => setShowSettings(true)} style={styles.settingsButton}>
           <Text style={styles.settingsText}>设置</Text>
         </Pressable>
+      </View>
+      <View style={styles.brandHeader} pointerEvents="none">
+        <Text style={styles.brandTitle}>答案之书</Text>
+        <View style={styles.categoryRibbon}>
+          <Text style={styles.categoryRibbonText}>{selectedCategory?.label || '人生'}</Text>
+        </View>
       </View>
       <View style={styles.content}>
         <View style={styles.categoryStrip} pointerEvents="box-none">
@@ -155,9 +166,16 @@ export default function App() {
           </Animated.ScrollView>
         </View>
         {!answer && (
-          <Text style={styles.header}>
-            请默念你的问题。
-          </Text>
+          <View style={styles.promptWrap}>
+            <Text style={styles.header}>
+              请默念你的问题
+            </Text>
+            {!countdown && (
+              <Text style={styles.categoryHint}>
+                可先左右切换分类，再寻找答案
+              </Text>
+            )}
+          </View>
         )}
         {countdown ? (
           <View style={styles.countdownWrap}>
@@ -326,7 +344,7 @@ export default function App() {
                   setCountdown(null);
                 }}
               >
-                <Text style={styles.settingValue}>{selectedCategory?.label || '人生日常'}</Text>
+                <Text style={styles.settingValue}>{selectedCategory?.label || '人生'}</Text>
               </Pressable>
             </View>
             <View style={styles.settingRow}>
@@ -363,6 +381,48 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   settingsText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  brandHeader: {
+    position: 'absolute',
+    top: 116,
+    left: 20,
+    right: 20,
+    zIndex: 3,
+    alignItems: 'center',
+  },
+  brandTitle: {
+    color: '#FFD95A',
+    fontSize: 54,
+    lineHeight: 62,
+    fontWeight: '900',
+    textAlign: 'center',
+    textShadowColor: 'rgba(83, 27, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 8,
+  },
+  categoryRibbon: {
+    marginTop: 8,
+    minWidth: 150,
+    paddingHorizontal: 28,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(196, 112, 16, 0.82)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 221, 125, 0.88)',
+    shadowColor: '#FFD45A',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.75,
+    shadowRadius: 10,
+  },
+  categoryRibbonText: {
+    color: '#FFF6D1',
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '800',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
   content: { alignItems: 'center', paddingTop: 360 },
   categoryStrip: { width: '100%', height: 90, marginTop: 6 },
   categoryPage: { width: SCREEN_WIDTH, alignItems: 'center', justifyContent: 'center' },
@@ -391,8 +451,8 @@ const styles = StyleSheet.create({
     fontSize: 34,
     lineHeight: 40,
     color: '#FFFFFF',
-    marginTop: -16,
-    marginBottom: 16,
+    marginTop: 0,
+    marginBottom: 6,
     textAlign: 'center',
     width: 320,
     alignSelf: 'center',
@@ -400,6 +460,18 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
+  },
+  promptWrap: { alignItems: 'center', marginTop: -16, marginBottom: 16 },
+  categoryHint: {
+    color: '#FFF6D1',
+    fontSize: 15,
+    lineHeight: 20,
+    textAlign: 'center',
+    width: 300,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0,0,0,0.65)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
   },
   button: { backgroundColor: '#3a86ff', width: 220, paddingVertical: 12, borderRadius: 8, marginTop: -8, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 18, textAlign: 'center' },
