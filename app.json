@@ -3,7 +3,7 @@
     "name": "答案之书",
     "slug": "the-book-of-answers-zh",
     "scheme": "thebookofanswerszh",
-    "version": "1.1.0",
+    "version": "1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
