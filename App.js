@@ -1,11 +1,27 @@
 import { StatusBar } from 'expo-status-bar';
-import { Animated, Dimensions, ImageBackground, Modal, Pressable, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Animated,
+  ImageBackground,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 import { ANSWER_CATEGORIES } from './answers';
 import InterstitialScreen from './InterstitialScreen';
+import { chooseAnswer, classifyQuestion } from './questionEngine';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SPARKLE_POINTS = [
   { x: -120, y: -40 },
   { x: 120, y: -48 },
@@ -25,20 +41,19 @@ const SPARKLE_POINTS = [
   { x: 150, y: 90 },
 ];
 const HALO_GLYPHS = ['✦', '✧', '✶', '✴', '✹', '✷', '✵', '✺'];
-const CATEGORY_COLORS = ['#F6C453', '#FF6B6B', '#6BCB77', '#4D96FF', '#B980F0'];
 
 export default function App() {
-  const totalCategories = ANSWER_CATEGORIES.length;
+  const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [countdown, setCountdown] = useState(null);
-  const [pageIndex, setPageIndex] = useState(totalCategories > 1 ? 1 : 0);
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState('life');
+  const [inputError, setInputError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [enableHaptics, setEnableHaptics] = useState(true);
   const [enableAnimations, setEnableAnimations] = useState(true);
   const [tapCount, setTapCount] = useState(0);
   const timerRef = useRef(null);
   const interstitialRef = useRef(null);
-  const categoryScrollRef = useRef(null);
   const answerAnim = useRef(new Animated.Value(0)).current;
   const sparkleAnim = useRef(new Animated.Value(0)).current;
   const revealAnim = useRef(new Animated.Value(0)).current;
@@ -92,12 +107,62 @@ export default function App() {
   };
 
 
-  const categories = ANSWER_CATEGORIES;
-  const pages = totalCategories > 1
-    ? [categories[totalCategories - 1], ...categories, categories[0]]
-    : categories;
-  const categoryIndex = totalCategories > 1 ? (pageIndex - 1 + totalCategories) % totalCategories : 0;
-  const selectedCategory = categories[categoryIndex] || categories[0];
+  const selectedCategory =
+    ANSWER_CATEGORIES.find((category) => category.key === selectedCategoryKey) ||
+    ANSWER_CATEGORIES[0];
+
+  const resetQuestion = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setQuestion('');
+    setAnswer('');
+    setCountdown(null);
+    setInputError('');
+    setSelectedCategoryKey('life');
+  };
+
+  const findAnswer = () => {
+    const trimmedQuestion = question.trim();
+    if (trimmedQuestion.length < 2) {
+      setInputError('请先写下一个完整的问题');
+      if (enableHaptics) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+      }
+      return;
+    }
+    if (timerRef.current) return;
+
+    Keyboard.dismiss();
+    setInputError('');
+    const matchedCategory = classifyQuestion(trimmedQuestion, ANSWER_CATEGORIES);
+    setSelectedCategoryKey(matchedCategory.key);
+
+    if (enableHaptics) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    }
+
+    const nextCount = tapCount + 1;
+    setTapCount(nextCount);
+    if (nextCount % 3 === 0) {
+      interstitialRef.current?.show();
+    }
+
+    let n = 3;
+    setCountdown(n);
+    timerRef.current = setInterval(() => {
+      n -= 1;
+      if (n > 0) {
+        setCountdown(n);
+      } else {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+        setCountdown(null);
+        setAnswer(chooseAnswer(trimmedQuestion, matchedCategory));
+      }
+    }, 700);
+  };
 
   const categoryBackgrounds = {
     life: require('./assets/images/categories/life.png'),
@@ -118,6 +183,11 @@ export default function App() {
       style={styles.container}
       resizeMode="cover"
     >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
       <View style={styles.topBar}>
         <Pressable onPress={() => setShowSettings(true)} style={styles.settingsButton}>
           <Text style={styles.settingsText}>设置</Text>
@@ -125,60 +195,46 @@ export default function App() {
       </View>
       <View style={styles.brandHeader} pointerEvents="none">
         <Text style={styles.brandTitle}>答案之书</Text>
-        <View style={styles.categoryRibbon}>
-          <Text style={styles.categoryRibbonText}>{selectedCategory?.label || '人生'}</Text>
-        </View>
+        {(answer || countdown) && (
+          <View style={styles.categoryRibbon}>
+            <Text style={styles.categoryRibbonLabel}>问题属于</Text>
+            <Text style={styles.categoryRibbonText}>{selectedCategory?.label || '人生'}</Text>
+          </View>
+        )}
       </View>
-      <View style={styles.content}>
-        <View style={styles.categoryStrip} pointerEvents="box-none">
-          <Animated.ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            ref={categoryScrollRef}
-            scrollEnabled
-            decelerationRate="fast"
-            snapToInterval={SCREEN_WIDTH}
-            snapToAlignment="start"
-            contentOffset={totalCategories > 1 ? { x: SCREEN_WIDTH, y: 0 } : { x: 0, y: 0 }}
-            onMomentumScrollEnd={(event) => {
-              const nextPage = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              if (totalCategories > 1) {
-                if (nextPage === 0) {
-                  setPageIndex(totalCategories);
-                  categoryScrollRef.current?.scrollTo({ x: totalCategories * SCREEN_WIDTH, animated: false });
-                } else if (nextPage === totalCategories + 1) {
-                  setPageIndex(1);
-                  categoryScrollRef.current?.scrollTo({ x: SCREEN_WIDTH, animated: false });
-                } else {
-                  setPageIndex(nextPage);
-                }
-                setAnswer('');
-                setCountdown(null);
-              }
-            }}
-          >
-            {pages.map((cat, i) => (
-              <View key={`${cat.key}-${i}`} style={styles.categoryPage}>
-                <View style={styles.categoryTitleSpacer} />
-              </View>
-            ))}
-          </Animated.ScrollView>
-        </View>
-        {!answer && (
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {!answer && !countdown && (
           <View style={styles.promptWrap}>
-            <Text style={styles.header}>
-              请默念你的问题
-            </Text>
-            {!countdown && (
-              <Text style={styles.categoryHint}>
-                可先左右切换分类，再寻找答案
-              </Text>
-            )}
+            <Text style={styles.header}>写下你想问的问题</Text>
+            <Text style={styles.categoryHint}>答案之书会理解问题，并寻找最贴近的答案</Text>
+            <View style={[styles.questionBox, inputError && styles.questionBoxError]}>
+              <TextInput
+                value={question}
+                onChangeText={(value) => {
+                  setQuestion(value);
+                  setInputError('');
+                }}
+                placeholder="例如：我现在应该换工作吗？"
+                placeholderTextColor="rgba(255,255,255,0.52)"
+                style={styles.questionInput}
+                multiline
+                maxLength={80}
+                textAlignVertical="top"
+                returnKeyType="done"
+                blurOnSubmit
+              />
+              <Text style={styles.characterCount}>{question.length}/80</Text>
+            </View>
+            {!!inputError && <Text style={styles.inputError}>{inputError}</Text>}
           </View>
         )}
         {countdown ? (
           <View style={styles.countdownWrap}>
+            <Text style={styles.readingLabel}>正在理解你的问题</Text>
             <Animated.View
               style={[
                 styles.halo,
@@ -203,6 +259,7 @@ export default function App() {
           </View>
         ) : answer ? (
           <View style={styles.answerWrap}>
+            <Text style={styles.questionEcho}>“{question.trim()}”</Text>
             {enableAnimations &&
               SPARKLE_POINTS.map((p, i) => (
                 <Animated.View
@@ -252,100 +309,22 @@ export default function App() {
         {countdown == null && (
           <TouchableOpacity
             style={[styles.button, answer && styles.buttonRed]}
-            onPress={() => {
-              // If an answer is already shown, clear it (don't load a new one).
-              if (answer) {
-                setAnswer('');
-                return;
-              }
-              // start countdown then pick an answer
-              if (timerRef.current) return;
-              if (enableHaptics) {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-              }
-              const nextCount = tapCount + 1;
-              setTapCount(nextCount);
-              if (nextCount % 3 === 0) {
-                interstitialRef.current?.show();
-              }
-              let n = 5;
-              setCountdown(n);
-              timerRef.current = setInterval(() => {
-                n -= 1;
-                if (n > 0) {
-                  setCountdown(n);
-                } else {
-                  clearInterval(timerRef.current);
-                  timerRef.current = null;
-                  setCountdown(null);
-                  const pool = selectedCategory?.answers || [];
-                  const idx = Math.floor(Math.random() * pool.length);
-                  setAnswer(pool[idx] || '');
-                }
-              }, 1000);
-            }}
+            onPress={answer ? resetQuestion : findAnswer}
           >
-            <Text style={styles.buttonText}>{answer ? '再问一次' : '寻找答案'}</Text>
+            <Text style={styles.buttonText}>{answer ? '问另一个问题' : '寻找答案'}</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </ScrollView>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
       <InterstitialScreen ref={interstitialRef} />
-      <View style={styles.ribbonNav} pointerEvents="box-none">
-        <TouchableOpacity
-          style={styles.ribbonButton}
-          activeOpacity={0.7}
-          delayPressIn={0}
-          delayPressOut={0}
-          hitSlop={{ top: 24, bottom: 24, left: 24, right: 24 }}
-          pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
-          onPress={() => {
-            if (totalCategories <= 1) return;
-            const nextPage = pageIndex - 1;
-            categoryScrollRef.current?.scrollTo({ x: nextPage * SCREEN_WIDTH, animated: true });
-            setPageIndex(nextPage);
-            setAnswer('');
-            setCountdown(null);
-          }}
-        >
-          <Text style={styles.ribbonButtonText}>‹</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.ribbonButton}
-          activeOpacity={0.7}
-          delayPressIn={0}
-          delayPressOut={0}
-          hitSlop={{ top: 24, bottom: 24, left: 24, right: 24 }}
-          pressRetentionOffset={{ top: 40, bottom: 40, left: 40, right: 40 }}
-          onPress={() => {
-            if (totalCategories <= 1) return;
-            const nextPage = pageIndex + 1;
-            categoryScrollRef.current?.scrollTo({ x: nextPage * SCREEN_WIDTH, animated: true });
-            setPageIndex(nextPage);
-            setAnswer('');
-            setCountdown(null);
-          }}
-        >
-          <Text style={styles.ribbonButtonText}>›</Text>
-        </TouchableOpacity>
-      </View>
       <Modal animationType="fade" transparent visible={showSettings} onRequestClose={() => setShowSettings(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setShowSettings(false)}>
           <Pressable style={styles.modalCard} onPress={() => {}}>
             <Text style={styles.modalTitle}>设置</Text>
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>分类</Text>
-              <Pressable
-                onPress={() => {
-                  if (totalCategories <= 1) return;
-                  const nextPage = pageIndex + 1;
-                  categoryScrollRef.current?.scrollTo({ x: nextPage * SCREEN_WIDTH, animated: true });
-                  setPageIndex(nextPage);
-                  setAnswer('');
-                  setCountdown(null);
-                }}
-              >
-                <Text style={styles.settingValue}>{selectedCategory?.label || '人生'}</Text>
-              </Pressable>
+              <Text style={styles.settingLabel}>问题分类</Text>
+              <Text style={styles.settingValue}>自动识别</Text>
             </View>
             <View style={styles.settingRow}>
               <Text style={styles.settingLabel}>震动</Text>
@@ -368,6 +347,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'flex-start', backgroundColor: '#0d1b2a' },
+  keyboardView: { flex: 1, width: '100%', alignItems: 'center' },
   topBar: {
     position: 'absolute',
     top: 60,
@@ -401,10 +381,10 @@ const styles = StyleSheet.create({
   },
   categoryRibbon: {
     marginTop: 8,
-    minWidth: 150,
-    paddingHorizontal: 28,
-    paddingVertical: 8,
-    borderRadius: 999,
+    minWidth: 132,
+    paddingHorizontal: 20,
+    paddingVertical: 7,
+    borderRadius: 8,
     backgroundColor: 'rgba(196, 112, 16, 0.82)',
     borderWidth: 1,
     borderColor: 'rgba(255, 221, 125, 0.88)',
@@ -413,70 +393,115 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.75,
     shadowRadius: 10,
   },
+  categoryRibbonLabel: {
+    color: 'rgba(255,246,209,0.78)',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   categoryRibbonText: {
     color: '#FFF6D1',
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: '800',
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.45)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-  content: { alignItems: 'center', paddingTop: 360 },
-  categoryStrip: { width: '100%', height: 90, marginTop: 6 },
-  categoryPage: { width: SCREEN_WIDTH, alignItems: 'center', justifyContent: 'center' },
-  categoryTitleSpacer: { height: 24 },
-  ribbonNav: {
-    position: 'absolute',
-    bottom: 80,
-    left: 28,
-    right: 28,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    zIndex: 20,
-    elevation: 20,
-  },
-  ribbonButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+  content: {
+    flexGrow: 1,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 245,
+    paddingHorizontal: 24,
+    paddingBottom: 38,
   },
-  ribbonButtonText: { color: '#F8F4E3', fontSize: 26, fontWeight: '700', lineHeight: 28 },
   header: {
-    fontSize: 34,
-    lineHeight: 40,
+    fontSize: 28,
+    lineHeight: 34,
     color: '#FFFFFF',
     marginTop: 0,
     marginBottom: 6,
     textAlign: 'center',
-    width: 320,
+    width: '100%',
     alignSelf: 'center',
     fontWeight: '600',
     textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
-  promptWrap: { alignItems: 'center', marginTop: -16, marginBottom: 16 },
+  promptWrap: { width: '100%', maxWidth: 380, alignItems: 'center', marginBottom: 18 },
   categoryHint: {
     color: '#FFF6D1',
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
-    width: 300,
+    width: '100%',
     fontWeight: '600',
     textShadowColor: 'rgba(0,0,0,0.65)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 5,
   },
-  button: { backgroundColor: '#3a86ff', width: 220, paddingVertical: 12, borderRadius: 8, marginTop: -8, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 18, textAlign: 'center' },
+  questionBox: {
+    width: '100%',
+    minHeight: 132,
+    marginTop: 18,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 230, 151, 0.7)',
+    borderRadius: 8,
+    backgroundColor: 'rgba(8, 16, 28, 0.72)',
+  },
+  questionBoxError: { borderColor: '#FF8A80' },
+  questionInput: {
+    minHeight: 82,
+    color: '#FFFFFF',
+    fontSize: 18,
+    lineHeight: 27,
+    padding: 0,
+  },
+  characterCount: {
+    position: 'absolute',
+    right: 12,
+    bottom: 8,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+  },
+  inputError: {
+    alignSelf: 'flex-start',
+    marginTop: 7,
+    color: '#FFD0CC',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  button: {
+    backgroundColor: '#3a86ff',
+    width: 220,
+    minHeight: 48,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: '700', textAlign: 'center' },
   buttonRed: { backgroundColor: '#3a86ff' },
-  answerWrap: { alignItems: 'center', justifyContent: 'center', marginTop: -48 },
+  answerWrap: { width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
+  questionEcho: {
+    maxWidth: 330,
+    marginBottom: 14,
+    color: 'rgba(255,246,209,0.86)',
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
   answerTextWrap: { alignItems: 'center', width: 320, alignSelf: 'center' },
   answer: {
     fontSize: 36,
@@ -501,7 +526,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.9,
     shadowRadius: 8,
   },
-  countdownWrap: { alignItems: 'center', marginVertical: 16 },
+  countdownWrap: { alignItems: 'center', marginBottom: 24 },
+  readingLabel: {
+    marginBottom: 16,
+    color: '#FFF6D1',
+    fontSize: 17,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0,0,0,0.65)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
+  },
   halo: {
     width: 140,
     height: 140,
